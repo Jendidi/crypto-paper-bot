@@ -194,10 +194,14 @@ def no_trade_band(w, band=None):
         if since is not None and w.index[i] < since:
             cur = a[i].copy()
         else:
-            change = (np.abs(a[i] - cur) >= band) | ((a[i] == 0) & (cur > 0))
-            cur = np.where(change, a[i], cur)
+            new = np.where((np.abs(a[i] - cur) >= band) | ((a[i] == 0) & (cur > 0)), a[i], cur)
+            over = new.sum() - 1.0                        # au-delà de 100 % du capital : on rogne seulement les hausses,
+            rises = np.maximum(new - cur, 0.0)            # jamais les positions déjà détenues (pas de levier, pas d'ordres inutiles)
+            if over > 1e-12 and rises.sum() > 0:
+                new = cur + (new - cur) * np.where(new > cur, max(0.0, 1.0 - over / rises.sum()), 1.0)
+            cur = new
         out[i] = cur
-    return cap_gross(pd.DataFrame(out, index=w.index, columns=w.columns))
+    return pd.DataFrame(out, index=w.index, columns=w.columns)
 
 
 def blend(closes, bars, trend_share=0.5, size=None, band=None):

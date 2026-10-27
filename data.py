@@ -15,7 +15,7 @@ import requests
 import config
 
 CACHE = Path("data")
-BARS_PER_DAY = {"1h": 24, "4h": 6, "1d": 1}
+BARS_PER_DAY = {"15m": 96, "1h": 24, "4h": 6, "1d": 1}
 HOSTS = ["https://data-api.binance.vision", "https://api.binance.com"]
 COLUMNS = ["open", "high", "low", "close", "volume"]
 _session = requests.Session()
@@ -62,16 +62,16 @@ def fetch_prices(symbols):
     return {s: by_pair[_pair(s)] for s in symbols}
 
 
-def fetch_history(symbol, days=None):
-    """Historique 1h complet, avec cache local mis à jour de façon incrémentale."""
+def fetch_history(symbol, days=None, interval="1h"):
+    """Historique complet (1h par défaut, ou 15m...), avec cache local mis à jour de façon incrémentale."""
     CACHE.mkdir(exist_ok=True)
-    path = CACHE / f"{symbol.replace('/', '_')}_1h.csv"
+    path = CACHE / f"{symbol.replace('/', '_')}_{interval}.csv"
     old = pd.read_csv(path, index_col="ts", parse_dates=True) if path.exists() else None
     since = (int(old.index[-1].timestamp() * 1000) + 1 if old is not None
              else int((time.time() - (days or config.HISTORY_DAYS) * 86_400) * 1000))
     rows = []
     while True:
-        batch = _get("/api/v3/klines", {"symbol": _pair(symbol), "interval": "1h", "startTime": since, "limit": 1000})
+        batch = _get("/api/v3/klines", {"symbol": _pair(symbol), "interval": interval, "startTime": since, "limit": 1000})
         if not batch:
             break
         rows += batch
