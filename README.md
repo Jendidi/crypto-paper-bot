@@ -23,7 +23,9 @@ Le bot décide à la clôture de chaque bougie journalière (00:00 UTC). Le capi
 
 En marché baissier, les deux volets se mettent en cash d'eux-mêmes : le bot trade beaucoup en marché haussier et presque pas en marché baissier. Aucun levier : la somme des positions ne dépasse jamais 100 % du capital.
 
-**Test sur le passé** (4 ans, 25 cryptos, frais, glissement et financement inclus, `python backtest_blend.py`) : +8,4 %/an, pire baisse de -20 %, positif chaque année. Depuis août 2025 (marché baissier) : +1,8 %/an contre -30 % pour le BTC. Le capital n'est investi qu'à 13 % en moyenne, d'où un rendement modeste. Les réglages voisins donnent de +6 à +10 %/an. Rien ne garantit que cela se reproduise.
+**Taille des positions : ×2 depuis la bougie du 27/10/2026** (×1 avant, réglage `SIZE_SCHEDULE` dans `config.py`). Le compte n'a pas été remis à zéro : le calcul du passé reste en ×1, seul l'avenir passe en ×2. Avec ×2, un trade de retour à la moyenne risque 2 % du capital (1 % en ×1), et jusqu'à 10 positions peuvent s'ouvrir en même temps après une chute généralisée.
+
+**Test sur le passé** (4 ans, 25 cryptos, frais, glissement et financement inclus, `python backtest_blend.py`) en ×2 : +15,9 %/an, pire baisse de -34 %, positif chaque année. Depuis août 2025 (marché baissier) : +2,4 %/an contre -30 % pour le BTC. En ×1 : +8,4 %/an et -20 % de pire baisse. Le ratio rendement/risque est à peu près identique : on mise plus sur le même pari, et le gain en plus vient surtout de 2023-2024. Rien ne garantit que cela se reproduise.
 
 ## Ce qui a été testé et écarté
 

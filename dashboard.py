@@ -35,6 +35,14 @@ def clean(x):
     return x
 
 
+def size_note():
+    """Taille des positions, avec la date du dernier changement s'il y en a eu un."""
+    (_, first), (date, last) = config.SIZE_SCHEDULE[0], config.SIZE_SCHEDULE[-1]
+    if last == first:
+        return f"taille des positions ×{last:g}"
+    return f"taille des positions ×{last:g} à partir de la bougie du {pd.Timestamp(date):%d/%m/%Y} (×{first:g} avant)"
+
+
 def recent_daily(symbol):
     return fetch_recent(symbol, "1d", limit=400)["close"]
 
@@ -106,6 +114,7 @@ def main():
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "start": state["start"], "start_equity": start_eq, "equity": equity,
         "bar": state["last_bar"], "strategy": config.STRATEGY, "strategy_label": LABELS.get(config.STRATEGY, config.STRATEGY),
+        "size_note": size_note(),
         "bar_equity": state["equity"], "weights": state["weights"], "last_closes": state["last_closes"],
         "cash": equity - invested, "invested": invested, "max_dd": max_dd,
         "curve": curve, "positions": positions, "assets": assets,

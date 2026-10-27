@@ -11,6 +11,7 @@ données pour éviter le sur-ajustement.
 import numpy as np
 import pandas as pd
 
+import config
 from data import BARS_PER_DAY
 
 
@@ -170,10 +171,20 @@ def cap_gross(w):
     return w.div(np.maximum(w.abs().sum(axis=1), 1.0), axis=0)
 
 
-def blend(closes, bars, trend_share=0.5):
+def size_multiplier(index, size=None):
+    """Taille des positions bougie par bougie : `size` fixe si donnée, sinon config.SIZE_SCHEDULE."""
+    k = pd.Series(1.0 if size is None else float(size), index=index)
+    if size is None:
+        for date, mult in config.SIZE_SCHEDULE:
+            k[index >= pd.Timestamp(date)] = mult
+    return k
+
+
+def blend(closes, bars, trend_share=0.5, size=None):
     """Moitié suivi de tendance (tsmom_lo, quelques ordres par mois), moitié retours à la moyenne (RSI2,
     trades de 1 à 10 jours avec stop). En marché baissier, les deux se mettent en cash d'eux-mêmes."""
-    return cap_gross(trend_share * tsmom(closes, long_only=True) + rsi2_sleeve(bars).reindex(closes.index).fillna(0.0))
+    raw = trend_share * tsmom(closes, long_only=True) + rsi2_sleeve(bars).reindex(closes.index).fillna(0.0)
+    return cap_gross(raw.mul(size_multiplier(closes.index, size), axis=0))
 
 
 PER_ASSET = {"trend_ema": trend_ema, "donchian": donchian, "mean_reversion": mean_reversion}

@@ -156,7 +156,7 @@ const sym = (s) => s.split("/")[0];
 function header() {
   $("meta").textContent = "Stratégie : " + D.strategy_label + " · départ le " +
     new Date(D.start).toLocaleDateString("fr-FR") + " avec " + usd(D.start_equity) + " fictifs · frais " +
-    nf(D.costs.fee * 100, 2) + " % + glissement " + nf(D.costs.slip * 100, 2) + " % par ordre";
+    nf(D.costs.fee * 100, 2) + " % + glissement " + nf(D.costs.slip * 100, 2) + " % par ordre · " + D.size_note;
   const stale = Date.now() - Date.parse(D.generated) > 3 * 3600e3;
   $("banner").innerHTML = (D.liveAt
     ? "<b>Prix en direct</b>, rafraîchis toutes les 15 secondes. État du bot au " + when(D.generated) + " (" + ago(D.generated) + "). "
@@ -278,7 +278,7 @@ function backtest() {
   $("bt").innerHTML = blk("Bot, toute la période (" + b.from + " → " + b.to + ")", b.all) + blk("BTC gardé, même période", b.btc_all) +
     blk("Bot, depuis le " + b.split + " (marché baissier)", b.after) + blk("BTC gardé, depuis le " + b.split, b.btc_after);
   $("bt-note").textContent = "Test sur le passé avec frais, glissement et financement inclus, sur " + b.n_assets + " cryptos. Il ne garantit rien : " +
-    "la période ne contient qu'un cycle de marché, les réglages voisins donnent de +6 % à +10 % par an, et les cryptos testées sont celles qui existent encore aujourd'hui, ce qui flatte un peu le résultat. " +
+    "réalisé avec la taille de positions actuelle (×2), la période ne contient qu'un cycle de marché, les réglages voisins donnent des résultats du même ordre sans être clairement meilleurs, et les cryptos testées sont celles qui existent encore aujourd'hui, ce qui flatte un peu le résultat. " +
     "Le bot était investi à " + nf(b.invested * 100, 0) + " % en moyenne, avec environ " + nf(b.orders_week, 0) + " ordres par semaine (toutes cryptos confondues), " +
     "beaucoup plus en marché haussier et presque aucun en marché baissier. Il cherche surtout à limiter les baisses, pas à battre le BTC dans un marché qui monte. " +
     "Le résultat qui compte est celui de la courbe ci-dessus, observée sur des semaines.";

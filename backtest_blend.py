@@ -8,22 +8,23 @@ import pandas as pd
 import config
 from data import fetch_daily
 from engine import net_returns, stats
-from strategy import weights
+from strategy import blend
 
 START = "2022-10-27"
 
 
-def run():
+def run(size=2.0):
+    """Rejoue la stratégie sur tout l'historique avec une taille fixe (x2 par défaut : la taille déployée)."""
     names = [s.split("/")[0] for s in config.SYMBOLS]
     bars = {n: fetch_daily(f"{n}/USDT") for n in names}
     closes = pd.DataFrame({n: d["close"] for n, d in bars.items()}).loc[START:]
     bars = {n: d.loc[closes.index[0]:] for n, d in bars.items()}
-    w = weights("blend", bars, "1d").reindex(closes.index).fillna(0.0)
+    w = blend(closes, bars, size=size).reindex(closes.index).fillna(0.0)
     return closes, w, net_returns(w, closes, "1d")
 
 
-def summary():
-    closes, w, net = run()
+def summary(size=2.0):
+    closes, w, net = run(size)
     split = closes.index[int(len(closes) * (1 - config.OUT_OF_SAMPLE))]
     btc = closes.iloc[:, 0].pct_change().fillna(0)
     zero = pd.DataFrame(0.0, index=closes.index, columns=closes.columns)

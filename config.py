@@ -12,6 +12,11 @@ HISTORY_DAYS = 1460       # 4 ans d'historique pour le backtest
 STRATEGY = "blend"        # moitié suivi de tendance, moitié retours à la moyenne avec stop (voir strategy.blend)
 TIMEFRAME = "1d"          # tsmom_lo ne fonctionne qu'en bougies journalières
 
+# Taille des positions : multiplicateur selon la date de la bougie. x2 à partir du 27/10/2026 (décidé en cours de route,
+# sans nouveau compte : avant cette date le calcul reste en x1). Test sur 4 ans : x1 = +8,4 %/an, pire baisse -20 % ;
+# x2 = +15,9 %/an, pire baisse -34 %. Avec x2, un trade de retour à la moyenne risque 2 % du capital (1 % en x1).
+SIZE_SCHEDULE = [("1970-01-01", 1.0), ("2026-10-27", 2.0)]
+
 # Capital fictif (partagé entre toutes les cryptos)
 STARTING_CASH = 100000.0  # en USDT
 # Sans levier : la somme des positions (en valeur absolue) ne dépasse jamais le capital.
