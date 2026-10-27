@@ -258,7 +258,7 @@ function assets() {
 function trades() {
   $("trades-count").textContent = D.n_trades > D.trades.length ? D.trades.length + " derniers sur " + D.n_trades : D.n_trades + " au total";
   if (!D.trades.length) {
-    $("trades").innerHTML = `<p class="empty">Aucun ordre pour l'instant. Le bot ne rééquilibre son portefeuille qu'une fois par semaine, le lundi à 00:00 UTC, et à son premier lancement.</p>`;
+    $("trades").innerHTML = `<p class="empty">Aucun ordre pour l'instant. Le bot ne rééquilibre son portefeuille qu'une fois par semaine : il décide avec la clôture du lundi, donc ses ordres passent le mardi à 00:00 UTC (prochain : 3 novembre).</p>`;
     return;
   }
   const rows = D.trades.map((t) => {

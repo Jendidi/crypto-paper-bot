@@ -16,7 +16,7 @@ Pour lancer une passe tout de suite : onglet **Actions** du dépôt, workflow «
 
 ## Stratégie : `tsmom_lo`
 
-Pour chaque crypto, le bot regarde si le prix est au-dessus de son niveau d'il y a 20, 50, 100 et 200 jours. Il n'est acheteur que si au moins 3 horizons sur 4 sont haussiers (3/4 = demi-position, 4/4 = position pleine). La taille est réduite pour les cryptos très volatiles, le total ne dépasse jamais 100 % du capital, et le portefeuille n'est rééquilibré que le lundi (00:00 UTC), pour limiter les frais. Sinon, le bot reste en cash.
+Pour chaque crypto, le bot regarde si le prix est au-dessus de son niveau d'il y a 20, 50, 100 et 200 jours. Il n'est acheteur que si au moins 3 horizons sur 4 sont haussiers (3/4 = demi-position, 4/4 = position pleine). La taille est réduite pour les cryptos très volatiles, le total ne dépasse jamais 100 % du capital, et le portefeuille n'est rééquilibré qu'une fois par semaine pour limiter les frais : le bot décide avec la clôture du lundi, donc ses ordres passent le mardi à 00:00 UTC. Sinon, le bot reste en cash.
 
 Test sur 4 ans, frais inclus : +12,6 %/an avec une pire baisse de -26 %, contre +40,9 %/an et -53 % pour le BTC gardé. Depuis août 2025 (marché baissier) : -9,4 %/an contre -27,8 %. Rien ne garantit que cela se reproduise.
 
