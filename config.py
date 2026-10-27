@@ -17,6 +17,11 @@ TIMEFRAME = "1d"          # tsmom_lo ne fonctionne qu'en bougies journalières
 # x2 = +15,9 %/an, pire baisse -34 %. Avec x2, un trade de retour à la moyenne risque 2 % du capital (1 % en x1).
 SIZE_SCHEDULE = [("1970-01-01", 1.0), ("2026-10-27", 2.0)]
 
+# Bande sans ordre : une position n'est modifiée que si l'écart avec sa cible dépasse 2 % du capital (les sorties complètes
+# restent toujours permises). Évite les micro-ordres. Test sur 4 ans en x2 : 13,7 -> 5,2 ordres par semaine, rendement inchangé.
+NO_TRADE_BAND = 0.02
+NO_TRADE_BAND_FROM = "2026-10-27"      # même principe que la taille : le passé du compte n'est pas recalculé
+
 # Capital fictif (partagé entre toutes les cryptos)
 STARTING_CASH = 100000.0  # en USDT
 # Sans levier : la somme des positions (en valeur absolue) ne dépasse jamais le capital.

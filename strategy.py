@@ -180,11 +180,31 @@ def size_multiplier(index, size=None):
     return k
 
 
-def blend(closes, bars, trend_share=0.5, size=None):
+def no_trade_band(w, band=None):
+    """Bande sans ordre : on ne modifie une position que si l'écart avec la cible atteint `band` (part du capital).
+    Les sorties complètes sont toujours permises. Sans argument : réglage de config, appliqué à partir de sa date."""
+    since = None
+    if band is None:
+        band, since = config.NO_TRADE_BAND, pd.Timestamp(config.NO_TRADE_BAND_FROM)
+    if not band:
+        return w
+    a = w.to_numpy()
+    out, cur = a.copy(), a[0].copy()
+    for i in range(len(a)):
+        if since is not None and w.index[i] < since:
+            cur = a[i].copy()
+        else:
+            change = (np.abs(a[i] - cur) >= band) | ((a[i] == 0) & (cur > 0))
+            cur = np.where(change, a[i], cur)
+        out[i] = cur
+    return cap_gross(pd.DataFrame(out, index=w.index, columns=w.columns))
+
+
+def blend(closes, bars, trend_share=0.5, size=None, band=None):
     """Moitié suivi de tendance (tsmom_lo, quelques ordres par mois), moitié retours à la moyenne (RSI2,
     trades de 1 à 10 jours avec stop). En marché baissier, les deux se mettent en cash d'eux-mêmes."""
     raw = trend_share * tsmom(closes, long_only=True) + rsi2_sleeve(bars).reindex(closes.index).fillna(0.0)
-    return cap_gross(raw.mul(size_multiplier(closes.index, size), axis=0))
+    return no_trade_band(cap_gross(raw.mul(size_multiplier(closes.index, size), axis=0)), band)
 
 
 PER_ASSET = {"trend_ema": trend_ema, "donchian": donchian, "mean_reversion": mean_reversion}

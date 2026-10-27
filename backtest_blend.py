@@ -13,13 +13,15 @@ from strategy import blend
 START = "2022-10-27"
 
 
-def run(size=2.0):
-    """Rejoue la stratégie sur tout l'historique avec une taille fixe (x2 par défaut : la taille déployée)."""
+def run(size=2.0, band=None):
+    """Rejoue la stratégie sur tout l'historique avec une taille fixe (x2 par défaut : la taille déployée)
+    et la bande sans ordre déployée (config.NO_TRADE_BAND) appliquée dès le début."""
+    band = config.NO_TRADE_BAND if band is None else band
     names = [s.split("/")[0] for s in config.SYMBOLS]
     bars = {n: fetch_daily(f"{n}/USDT") for n in names}
     closes = pd.DataFrame({n: d["close"] for n, d in bars.items()}).loc[START:]
     bars = {n: d.loc[closes.index[0]:] for n, d in bars.items()}
-    w = blend(closes, bars, size=size).reindex(closes.index).fillna(0.0)
+    w = blend(closes, bars, size=size, band=band).reindex(closes.index).fillna(0.0)
     return closes, w, net_returns(w, closes, "1d")
 
 

@@ -278,7 +278,7 @@ function backtest() {
   $("bt").innerHTML = blk("Bot, toute la période (" + b.from + " → " + b.to + ")", b.all) + blk("BTC gardé, même période", b.btc_all) +
     blk("Bot, depuis le " + b.split + " (marché baissier)", b.after) + blk("BTC gardé, depuis le " + b.split, b.btc_after);
   $("bt-note").textContent = "Test sur le passé avec frais, glissement et financement inclus, sur " + b.n_assets + " cryptos. Il ne garantit rien : " +
-    "réalisé avec la taille de positions actuelle (×2), la période ne contient qu'un cycle de marché, les réglages voisins donnent des résultats du même ordre sans être clairement meilleurs, et les cryptos testées sont celles qui existent encore aujourd'hui, ce qui flatte un peu le résultat. " +
+    "réalisé avec la taille de positions actuelle (×2) et la bande sans ordre de 2 %, la période ne contient qu'un cycle de marché, les réglages voisins donnent des résultats du même ordre sans être clairement meilleurs, et les cryptos testées sont celles qui existent encore aujourd'hui, ce qui flatte un peu le résultat. " +
     "Le bot était investi à " + nf(b.invested * 100, 0) + " % en moyenne, avec environ " + nf(b.orders_week, 0) + " ordres par semaine (toutes cryptos confondues), " +
     "beaucoup plus en marché haussier et presque aucun en marché baissier. Il cherche surtout à limiter les baisses, pas à battre le BTC dans un marché qui monte. " +
     "Le résultat qui compte est celui de la courbe ci-dessus, observée sur des semaines.";

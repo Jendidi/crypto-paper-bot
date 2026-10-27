@@ -38,9 +38,10 @@ def clean(x):
 def size_note():
     """Taille des positions, avec la date du dernier changement s'il y en a eu un."""
     (_, first), (date, last) = config.SIZE_SCHEDULE[0], config.SIZE_SCHEDULE[-1]
+    band = f" · ajustements de moins de {config.NO_TRADE_BAND:.0%} du capital ignorés" if config.NO_TRADE_BAND else ""
     if last == first:
-        return f"taille des positions ×{last:g}"
-    return f"taille des positions ×{last:g} à partir de la bougie du {pd.Timestamp(date):%d/%m/%Y} (×{first:g} avant)"
+        return f"taille des positions ×{last:g}{band}"
+    return f"taille des positions ×{last:g} à partir de la bougie du {pd.Timestamp(date):%d/%m/%Y} (×{first:g} avant){band}"
 
 
 def recent_daily(symbol):
