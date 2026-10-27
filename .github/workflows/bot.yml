@@ -1,0 +1,43 @@
+name: bot
+
+# Toutes les heures : une passe du bot (prix en direct, éventuels ordres fictifs), puis mise à jour
+# de la page docs/index.html servie par GitHub Pages. L'état est enregistré dans le dépôt.
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bot
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Passe du bot
+        run: python paper_trader.py --once
+      - name: Page de suivi
+        run: python dashboard.py
+      - name: Enregistrer l'état
+        run: |
+          git config user.name "paper-bot"
+          git config user.email "paper-bot@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Rien à enregistrer"
+          else
+            git commit -m "bot: état du $(date -u +'%Y-%m-%d %H:%M') UTC"
+            git pull --rebase
+            git push
+          fi

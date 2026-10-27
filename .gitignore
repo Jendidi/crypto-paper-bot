@@ -1,0 +1,5 @@
+__pycache__/
+data/
+dashboard.html
+backtest_result.csv
+.claude/

@@ -1,0 +1,61 @@
+{
+  "start": "2026-10-27T10:26:23+00:00",
+  "start_equity": 100000.0,
+  "equity": 99996.0,
+  "last_bar": "2026-10-26 00:00:00",
+  "weights": {
+    "BTC/USDT": 0.0,
+    "ETH/USDT": 0.0,
+    "SOL/USDT": 0.0,
+    "BNB/USDT": 0.0,
+    "XRP/USDT": 0.0,
+    "ADA/USDT": 0.0,
+    "DOGE/USDT": 0.0,
+    "LINK/USDT": 0.0,
+    "AVAX/USDT": 0.0,
+    "LTC/USDT": 0.05
+  },
+  "basis": {
+    "LTC/USDT": 56.81000000000001
+  },
+  "trades": [
+    {
+      "ts": "2026-10-26 00:00:00",
+      "symbol": "LTC/USDT",
+      "from": 0.0,
+      "to": 0.05,
+      "price": 56.81,
+      "usd": 4999.8,
+      "equity": 99996.0
+    }
+  ],
+  "last_closes": {
+    "BTC/USDT": 80150.56,
+    "ETH/USDT": 2324.55,
+    "SOL/USDT": 100.95,
+    "BNB/USDT": 742.88,
+    "XRP/USDT": 1.3092,
+    "ADA/USDT": 0.2067,
+    "DOGE/USDT": 0.07777,
+    "LINK/USDT": 11.406,
+    "AVAX/USDT": 8.978,
+    "LTC/USDT": 56.81
+  },
+  "live": {
+    "ts": "2026-10-27T14:11:47+00:00",
+    "equity": 99962.55652173914,
+    "prices": {
+      "BTC/USDT": 80112.28,
+      "ETH/USDT": 2325.95,
+      "SOL/USDT": 100.33,
+      "BNB/USDT": 743.0,
+      "XRP/USDT": 1.3145,
+      "ADA/USDT": 0.2041,
+      "DOGE/USDT": 0.07766,
+      "LINK/USDT": 11.345,
+      "AVAX/USDT": 8.796,
+      "LTC/USDT": 56.43
+    }
+  },
+  "last_eq_log": 1793110102.3815846
+}
