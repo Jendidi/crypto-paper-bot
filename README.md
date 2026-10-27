@@ -1,6 +1,6 @@
 # Bot de trading crypto (paper trading)
 
-Bot de suivi de tendance sur 10 cryptos, avec **100 000 USDT fictifs**. Aucune clé API, aucun compte d'exchange, aucun ordre réel : le bot lit les prix publics de Binance et simule ses ordres.
+Bot sur 25 cryptos avec **100 000 USDT fictifs**. Aucune clé API, aucun compte d'exchange, aucun ordre réel : le bot lit les prix publics de Binance et simule ses ordres, frais et glissement inclus.
 
 ## Comment il tourne 24h/24
 
@@ -14,23 +14,36 @@ La page de suivi lit en plus les prix en direct de Binance dans votre navigateur
 
 Pour lancer une passe tout de suite : onglet **Actions** du dépôt, workflow « bot », **Run workflow**.
 
-## Stratégie : `tsmom_lo`
+## Stratégie : `blend` (tendance + retours à la moyenne)
 
-Pour chaque crypto, le bot regarde si le prix est au-dessus de son niveau d'il y a 20, 50, 100 et 200 jours. Il n'est acheteur que si au moins 3 horizons sur 4 sont haussiers (3/4 = demi-position, 4/4 = position pleine). La taille est réduite pour les cryptos très volatiles, le total ne dépasse jamais 100 % du capital, et le portefeuille n'est rééquilibré qu'une fois par semaine pour limiter les frais : le bot décide avec la clôture du lundi, donc ses ordres passent le mardi à 00:00 UTC. Sinon, le bot reste en cash.
+Le bot décide à la clôture de chaque bougie journalière (00:00 UTC). Le capital est partagé entre deux volets complémentaires :
 
-Test sur 4 ans, frais inclus : +12,6 %/an avec une pire baisse de -26 %, contre +40,9 %/an et -53 % pour le BTC gardé. Depuis août 2025 (marché baissier) : -9,4 %/an contre -27,8 %. Rien ne garantit que cela se reproduise.
+- **Tendance (50 %)** : pour chaque crypto, le bot regarde si le prix est au-dessus de son niveau d'il y a 20, 50, 100 et 200 jours. Il n'achète qu'à partir de 3 horizons sur 4 (demi-position à 3/4, pleine à 4/4), avec une taille réduite pour les cryptos très volatiles. Rééquilibrage une fois par semaine pour limiter les frais.
+- **Retours à la moyenne** : quand une crypto en tendance haussière (au-dessus de sa moyenne 200 jours) chute violemment (RSI 2 sous 5), le bot l'achète. Il revend au rebond (clôture au-dessus de la moyenne 5 jours), au stop (3 fois l'ATR sous le prix d'entrée) ou après 10 jours. La taille est calculée pour ne risquer que **1 % du capital** par trade.
+
+En marché baissier, les deux volets se mettent en cash d'eux-mêmes : le bot trade beaucoup en marché haussier et presque pas en marché baissier. Aucun levier : la somme des positions ne dépasse jamais 100 % du capital.
+
+**Test sur le passé** (4 ans, 25 cryptos, frais, glissement et financement inclus, `python backtest_blend.py`) : +8,4 %/an, pire baisse de -20 %, positif chaque année. Depuis août 2025 (marché baissier) : +1,8 %/an contre -30 % pour le BTC. Le capital n'est investi qu'à 13 % en moyenne, d'où un rendement modeste. Les réglages voisins donnent de +6 à +10 %/an. Rien ne garantit que cela se reproduise.
+
+## Ce qui a été testé et écarté
+
+- **Trading actif en bougies 1h** (`active.py`, `backtest_active.py` : long et short, stops sur structure de 3 à 7 %, TP partiel, breakeven, risque 1 %) : -28,5 %/an, un peu pire que des entrées au hasard. Les trades de range sont le principal perdant. Avec des stops plus larges et un filtre de tendance journalière : entre -1 et +5 %/an, négatif depuis septembre 2025.
+- **Ventes à découvert en tendance** : trop sensibles aux réglages pour être fiables.
+- **Momentum relatif entre cryptos** et **stratégies 1h/4h** : perdantes une fois les frais payés.
+- Le compte précédent (`tsmom_lo`, 10 cryptos, tendance seule) est archivé dans `archive/`.
 
 ## Fichiers
 
 | Fichier | Rôle |
 |---|---|
 | `config.py` | Réglages : cryptos, capital, frais, stratégie |
-| `strategy.py` | Les stratégies (celle utilisée est `tsmom_lo`) |
+| `strategy.py` | Les stratégies (celle utilisée est `blend`) |
 | `engine.py` | Calcul du portefeuille, des frais et des statistiques |
 | `data.py` | Prix via l'API publique de Binance |
 | `paper_trader.py` | Le bot (`--once` pour une seule passe) |
 | `dashboard.py` + `dashboard_template.html` | Génèrent la page de suivi |
-| `backtest.py`, `research.py`, `sensitivity.py` | Tests sur le passé et tests de robustesse |
+| `backtest_blend.py` | Test de la stratégie utilisée |
+| `research*.py`, `sensitivity.py`, `backtest.py`, `active.py`, `backtest_active.py` | Recherche et stratégies écartées |
 
 ## En local (optionnel)
 
@@ -38,5 +51,5 @@ Test sur 4 ans, frais inclus : +12,6 %/an avec une pire baisse de -26 %, contre 
 pip install -r requirements.txt
 python paper_trader.py     # tourne en continu
 python dashboard.py        # génère docs/index.html
-python backtest.py         # compare les stratégies sur 4 ans
+python backtest_blend.py   # test sur 4 ans
 ```

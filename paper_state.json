@@ -1,32 +1,137 @@
 {
-  "start": "2026-10-27T10:26:23+00:00",
+  "start": "2026-10-27T15:54:03+00:00",
   "start_equity": 100000.0,
-  "equity": 99996.0,
+  "equity": 99968.008,
   "last_bar": "2026-10-26 00:00:00",
   "weights": {
     "BTC/USDT": 0.0,
-    "ETH/USDT": 0.0,
-    "SOL/USDT": 0.0,
+    "ETH/USDT": 0.0799,
+    "SOL/USDT": 0.0723,
     "BNB/USDT": 0.0,
     "XRP/USDT": 0.0,
     "ADA/USDT": 0.0,
     "DOGE/USDT": 0.0,
-    "LINK/USDT": 0.0,
-    "AVAX/USDT": 0.0,
-    "LTC/USDT": 0.05
+    "LINK/USDT": 0.0594,
+    "AVAX/USDT": 0.0458,
+    "LTC/USDT": 0.01,
+    "DOT/USDT": 0.041,
+    "ATOM/USDT": 0.0,
+    "UNI/USDT": 0.0,
+    "NEAR/USDT": 0.0044,
+    "TRX/USDT": 0.0,
+    "ETC/USDT": 0.0,
+    "XLM/USDT": 0.0,
+    "BCH/USDT": 0.0,
+    "FIL/USDT": 0.0357,
+    "AAVE/USDT": 0.0454,
+    "ALGO/USDT": 0.0,
+    "VET/USDT": 0.0,
+    "INJ/USDT": 0.006,
+    "OP/USDT": 0.0,
+    "APT/USDT": 0.0
   },
   "basis": {
-    "LTC/USDT": 56.81000000000001
+    "ETH/USDT": 2324.55,
+    "SOL/USDT": 100.95,
+    "LINK/USDT": 11.406,
+    "AVAX/USDT": 8.978,
+    "LTC/USDT": 56.81,
+    "DOT/USDT": 1.012,
+    "NEAR/USDT": 4.51,
+    "FIL/USDT": 0.9139000000000002,
+    "AAVE/USDT": 135.85,
+    "INJ/USDT": 8.058
   },
   "trades": [
     {
       "ts": "2026-10-26 00:00:00",
+      "symbol": "ETH/USDT",
+      "from": 0.0,
+      "to": 0.0799,
+      "price": 2324.55,
+      "usd": 7987.44,
+      "equity": 99968.01
+    },
+    {
+      "ts": "2026-10-26 00:00:00",
+      "symbol": "SOL/USDT",
+      "from": 0.0,
+      "to": 0.0723,
+      "price": 100.95,
+      "usd": 7227.69,
+      "equity": 99968.01
+    },
+    {
+      "ts": "2026-10-26 00:00:00",
+      "symbol": "LINK/USDT",
+      "from": 0.0,
+      "to": 0.0594,
+      "price": 11.406,
+      "usd": 5938.1,
+      "equity": 99968.01
+    },
+    {
+      "ts": "2026-10-26 00:00:00",
+      "symbol": "AVAX/USDT",
+      "from": 0.0,
+      "to": 0.0458,
+      "price": 8.978,
+      "usd": 4578.53,
+      "equity": 99968.01
+    },
+    {
+      "ts": "2026-10-26 00:00:00",
       "symbol": "LTC/USDT",
       "from": 0.0,
-      "to": 0.05,
+      "to": 0.01,
       "price": 56.81,
-      "usd": 4999.8,
-      "equity": 99996.0
+      "usd": 999.68,
+      "equity": 99968.01
+    },
+    {
+      "ts": "2026-10-26 00:00:00",
+      "symbol": "DOT/USDT",
+      "from": 0.0,
+      "to": 0.041,
+      "price": 1.012,
+      "usd": 4098.69,
+      "equity": 99968.01
+    },
+    {
+      "ts": "2026-10-26 00:00:00",
+      "symbol": "NEAR/USDT",
+      "from": 0.0,
+      "to": 0.0044,
+      "price": 4.51,
+      "usd": 439.86,
+      "equity": 99968.01
+    },
+    {
+      "ts": "2026-10-26 00:00:00",
+      "symbol": "FIL/USDT",
+      "from": 0.0,
+      "to": 0.0357,
+      "price": 0.9139,
+      "usd": 3568.86,
+      "equity": 99968.01
+    },
+    {
+      "ts": "2026-10-26 00:00:00",
+      "symbol": "AAVE/USDT",
+      "from": 0.0,
+      "to": 0.0454,
+      "price": 135.85,
+      "usd": 4538.55,
+      "equity": 99968.01
+    },
+    {
+      "ts": "2026-10-26 00:00:00",
+      "symbol": "INJ/USDT",
+      "from": 0.0,
+      "to": 0.006,
+      "price": 8.058,
+      "usd": 599.81,
+      "equity": 99968.01
     }
   ],
   "last_closes": {
@@ -39,23 +144,53 @@
     "DOGE/USDT": 0.07777,
     "LINK/USDT": 11.406,
     "AVAX/USDT": 8.978,
-    "LTC/USDT": 56.81
+    "LTC/USDT": 56.81,
+    "DOT/USDT": 1.012,
+    "ATOM/USDT": 1.64,
+    "UNI/USDT": 7.156,
+    "NEAR/USDT": 4.51,
+    "TRX/USDT": 0.3295,
+    "ETC/USDT": 7.62,
+    "XLM/USDT": 0.1695,
+    "BCH/USDT": 281.2,
+    "FIL/USDT": 0.9139,
+    "AAVE/USDT": 135.85,
+    "ALGO/USDT": 0.1057,
+    "VET/USDT": 0.006586,
+    "INJ/USDT": 8.058,
+    "OP/USDT": 0.1119,
+    "APT/USDT": 0.6982
   },
   "live": {
-    "ts": "2026-10-27T15:52:27+00:00",
-    "equity": 99993.35972540046,
+    "ts": "2026-10-27T15:54:12+00:00",
+    "equity": 99822.0223756776,
     "prices": {
-      "BTC/USDT": 80672.01,
-      "ETH/USDT": 2351.92,
-      "SOL/USDT": 101.12,
-      "BNB/USDT": 750.78,
-      "XRP/USDT": 1.321,
-      "ADA/USDT": 0.2061,
-      "DOGE/USDT": 0.07831,
-      "LINK/USDT": 11.478,
-      "AVAX/USDT": 8.871,
-      "LTC/USDT": 56.78
+      "BTC/USDT": 80660.0,
+      "ETH/USDT": 2350.63,
+      "SOL/USDT": 101.05,
+      "BNB/USDT": 750.6,
+      "XRP/USDT": 1.3209,
+      "ADA/USDT": 0.2058,
+      "DOGE/USDT": 0.07825,
+      "LINK/USDT": 11.467,
+      "AVAX/USDT": 8.867,
+      "LTC/USDT": 56.75,
+      "DOT/USDT": 0.993,
+      "ATOM/USDT": 1.62,
+      "UNI/USDT": 7.159,
+      "NEAR/USDT": 4.575,
+      "TRX/USDT": 0.3283,
+      "ETC/USDT": 7.61,
+      "XLM/USDT": 0.1695,
+      "BCH/USDT": 288.8,
+      "FIL/USDT": 0.9002,
+      "AAVE/USDT": 132.82,
+      "ALGO/USDT": 0.1036,
+      "VET/USDT": 0.00643,
+      "INJ/USDT": 8.172,
+      "OP/USDT": 0.1116,
+      "APT/USDT": 0.6886
     }
   },
-  "last_eq_log": 1793116347.9889634
+  "last_eq_log": 1793116452.8629403
 }

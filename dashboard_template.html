@@ -123,8 +123,8 @@ a { color: var(--accent); }
     <div class="scroll" id="positions"></div>
   </section>
   <section class="card" aria-labelledby="h-assets">
-    <div class="card-head"><h2 id="h-assets">Les 10 cryptos suivies</h2>
-      <span class="sub">Prix sur 180 jours, trait pointillé = moyenne 200 jours. Le score compte les horizons (20, 50, 100, 200 jours) où le prix est au-dessus de son niveau passé. Le bot n'achète qu'à partir de 3/4 : 3/4 donne une demi-position, 4/4 une position pleine.</span></div>
+    <div class="card-head"><h2 id="h-assets">Cryptos suivies</h2>
+      <span class="sub">Prix sur 180 jours, pointillé = moyenne 200 jours. Deux signaux d'achat : la tendance (score sur 4 horizons : 20, 50, 100 et 200 jours, achat à partir de 3/4) et le repli violent (RSI 2 sous 5 alors que le prix est au-dessus de sa moyenne 200 jours : achat pour 1 à 10 jours, stop à 3 ATR, 1 % du capital risqué).</span></div>
     <div class="assets" id="assets"></div>
   </section>
   <section class="card" aria-labelledby="h-trades">
@@ -154,7 +154,7 @@ const when = (iso) => new Date(iso).toLocaleString("fr-FR", { day: "2-digit", mo
 const sym = (s) => s.split("/")[0];
 
 function header() {
-  $("meta").textContent = "Stratégie " + D.strategy + " · départ le " +
+  $("meta").textContent = "Stratégie : " + D.strategy_label + " · départ le " +
     new Date(D.start).toLocaleDateString("fr-FR") + " avec " + usd(D.start_equity) + " fictifs · frais " +
     nf(D.costs.fee * 100, 2) + " % + glissement " + nf(D.costs.slip * 100, 2) + " % par ordre";
   const stale = Date.now() - Date.parse(D.generated) > 3 * 3600e3;
@@ -225,7 +225,7 @@ function drawCurve() {
 
 function positions() {
   if (!D.positions.length) {
-    $("positions").innerHTML = `<p class="empty">Aucune position ouverte : le bot est à 100 % en cash. Il n'achète une crypto que si son prix est au-dessus de son niveau passé sur au moins 3 des 4 horizons (20, 50, 100 et 200 jours).</p>`;
+    $("positions").innerHTML = `<p class="empty">Aucune position ouverte : le bot est à 100 % en cash. Il n'achète que sur une tendance haussière confirmée (3 horizons sur 4) ou sur un repli violent dans une tendance haussière.</p>`;
     return;
   }
   const rows = D.positions.map((p) => `<tr><td><b>${sym(p.sym)}</b></td><td><span class="pill ${p.w > 0 ? "buy" : "sell"}">${p.w > 0 ? "Acheteur" : "Vendeur"}</span></td>
@@ -251,14 +251,14 @@ function assets() {
       <div class="price">${price(a.price)} <span class="${cls(a.chg)}" style="font-size:12px">${pct(a.chg, 1)}</span></div>
       ${spark(a)}
       <div class="row"><span>Tendance <span class="bars" title="${a.score} horizon(s) haussier(s) sur 4">${bars}</span> ${a.score}/4</span></div>
-      <div class="row"><span>Cible ${nf(a.target * 100, 1)} %</span><span>Volat. ${nf(a.vol * 100, 0)} %</span></div></div>`;
+      <div class="row"><span>RSI 2 : ${nf(a.rsi2, 0)}${a.above200 ? "" : " · sous la moy. 200 j"}</span><span>Position ${nf(a.weight * 100, 1)} %</span></div></div>`;
   }).join("");
 }
 
 function trades() {
   $("trades-count").textContent = D.n_trades > D.trades.length ? D.trades.length + " derniers sur " + D.n_trades : D.n_trades + " au total";
   if (!D.trades.length) {
-    $("trades").innerHTML = `<p class="empty">Aucun ordre pour l'instant. Le bot ne rééquilibre son portefeuille qu'une fois par semaine : il décide avec la clôture du lundi, donc ses ordres passent le mardi à 00:00 UTC (prochain : 3 novembre).</p>`;
+    $("trades").innerHTML = `<p class="empty">Aucun ordre pour l'instant. Le bot décide à la clôture de chaque bougie journalière (00:00 UTC) : le volet tendance se rééquilibre le mardi, le volet retours à la moyenne peut ouvrir ou fermer une position n'importe quel jour.</p>`;
     return;
   }
   const rows = D.trades.map((t) => {
@@ -277,8 +277,10 @@ function backtest() {
     <dt>Pire baisse</dt><dd class="num neg">${nf(s.dd * 100, 0)} %</dd></dl></div>`;
   $("bt").innerHTML = blk("Bot, toute la période (" + b.from + " → " + b.to + ")", b.all) + blk("BTC gardé, même période", b.btc_all) +
     blk("Bot, depuis le " + b.split + " (marché baissier)", b.after) + blk("BTC gardé, depuis le " + b.split, b.btc_after);
-  $("bt-note").textContent = "Test sur le passé avec frais et glissement inclus. Il ne garantit rien : la période ne contient qu'un cycle de marché, " +
-    "et les réglages voisins donnent de +5 % à +15 % par an. Le bot cherche surtout à éviter les grosses baisses, au prix de gains plus faibles que le BTC en marché haussier. " +
+  $("bt-note").textContent = "Test sur le passé avec frais, glissement et financement inclus, sur " + b.n_assets + " cryptos. Il ne garantit rien : " +
+    "la période ne contient qu'un cycle de marché, les réglages voisins donnent de +6 % à +10 % par an, et les cryptos testées sont celles qui existent encore aujourd'hui, ce qui flatte un peu le résultat. " +
+    "Le bot était investi à " + nf(b.invested * 100, 0) + " % en moyenne, avec environ " + nf(b.orders_week, 0) + " ordres par semaine (toutes cryptos confondues), " +
+    "beaucoup plus en marché haussier et presque aucun en marché baissier. Il cherche surtout à limiter les baisses, pas à battre le BTC dans un marché qui monte. " +
     "Le résultat qui compte est celui de la courbe ci-dessus, observée sur des semaines.";
 }
 

@@ -16,13 +16,12 @@ import pandas as pd
 
 import config
 from data import fetch_recent
-from engine import hold_stats, net_returns, stats
-from research import daily_closes
-from strategy import tsmom
+from strategy import rsi
 
 HERE = Path(__file__).parent
 LOOKBACKS = (20, 50, 100, 200)
 SPARK_DAYS = 180
+LABELS = {"blend": "tendance + retours à la moyenne", "tsmom_lo": "suivi de tendance"}
 
 
 def clean(x):
@@ -42,28 +41,13 @@ def recent_daily(symbol):
 
 def backtest_summary():
     """Résultats du test sur le passé, figés dans backtest_summary.json (supprimez-le pour les recalculer
-    à partir du cache local data/, créé par backtest.py)."""
+    avec backtest_blend.py : ils sont figés pour que la page affiche toujours le même test)."""
     path = HERE / "backtest_summary.json"
     if path.exists():
         return json.loads(path.read_text(encoding="utf-8"))
-    out = compute_backtest()
+    from backtest_blend import summary
+    out = summary()
     path.write_text(json.dumps(clean(out), ensure_ascii=False, indent=1), encoding="utf-8")
-    return out
-
-
-def compute_backtest():
-    closes = daily_closes().dropna()
-    w = tsmom(closes, long_only=True)
-    net = net_returns(w, closes, "1d")
-    split = closes.index[int(len(closes) * (1 - config.OUT_OF_SAMPLE))]
-    out = {"from": f"{closes.index[0]:%d/%m/%Y}", "to": f"{closes.index[-1]:%d/%m/%Y}", "split": f"{split:%d/%m/%Y}"}
-    hold = hold_stats(closes, "1d")
-    hold_after = hold_stats(closes[closes.index >= split], "1d")
-    for label, mask in (("all", net.index >= net.index[0]), ("after", net.index >= split)):
-        s = stats(net[mask], w[mask], "1d")
-        out[label] = {k: s[k] for k in ("cagr", "sharpe", "dd")}
-    out["btc_all"] = {k: hold["BTC hold"][k] for k in ("cagr", "sharpe", "dd")}
-    out["btc_after"] = {k: hold_after["BTC hold"][k] for k in ("cagr", "sharpe", "dd")}
     return out
 
 
@@ -103,9 +87,6 @@ def main():
 
     # --- actifs : cours, score de tendance, courbe
     series = {s: recent_daily(s) for s in config.SYMBOLS}
-    closes = pd.DataFrame(series).dropna()
-    target = tsmom(closes, long_only=True).iloc[-1]
-    vol = closes.pct_change().rolling(30).std().iloc[-1] * np.sqrt(365)
     assets = []
     for s in config.SYMBOLS:
         c = series[s]
@@ -114,8 +95,8 @@ def main():
         price = prices.get(s, float(c.iloc[-1]))
         assets.append({
             "sym": s, "price": price, "chg": price / float(c.iloc[-1]) - 1,
-            "score": score, "vol": float(vol[s]), "target": float(target[s]),
-            "held": bool(state["weights"].get(s)),
+            "score": score, "rsi2": float(rsi(c, 2).iloc[-1]), "above200": bool(c.iloc[-1] > sma200.iloc[-1]),
+            "weight": float(state["weights"].get(s, 0.0)), "held": bool(state["weights"].get(s)),
             "close": [round(float(v), 6) for v in c.iloc[-SPARK_DAYS:]],
             "sma200": [None if pd.isna(v) else round(float(v), 6) for v in sma200.iloc[-SPARK_DAYS:]],
             "dates": [f"{d:%d/%m}" for d in c.index[-SPARK_DAYS:]],
@@ -124,7 +105,7 @@ def main():
     data = {
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "start": state["start"], "start_equity": start_eq, "equity": equity,
-        "bar": state["last_bar"], "strategy": config.STRATEGY,
+        "bar": state["last_bar"], "strategy": config.STRATEGY, "strategy_label": LABELS.get(config.STRATEGY, config.STRATEGY),
         "bar_equity": state["equity"], "weights": state["weights"], "last_closes": state["last_closes"],
         "cash": equity - invested, "invested": invested, "max_dd": max_dd,
         "curve": curve, "positions": positions, "assets": assets,

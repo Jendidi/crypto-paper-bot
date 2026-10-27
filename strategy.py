@@ -139,8 +139,45 @@ def tsmom(closes, lookbacks=(20, 50, 100, 200), long_only=False, vol_target=0.6,
     return w.ffill().fillna(0.0)
 
 
+def rsi2_sleeve(bars, thr=5, exit_sma=5, atr_mult=3.0, risk=0.01, max_hold=10, cap=0.25):
+    """Retour à la moyenne en achat seul (bougies JOURNALIÈRES) : on achète un repli violent (RSI 2 < thr)
+    dans une crypto en tendance haussière (au-dessus de sa moyenne 200 jours).
+    Sortie : rebond (clôture au-dessus de la moyenne `exit_sma`), stop (clôture sous le prix d'entrée moins
+    `atr_mult` x ATR) ou durée maximale `max_hold` jours.
+    Taille : si le stop est touché on perd `risk` (1 %) du capital, la position est plafonnée à `cap`."""
+    out = {}
+    for s, df in bars.items():
+        c = df["close"]
+        r2, sma200 = rsi(c, 2).to_numpy(), c.rolling(200).mean().to_numpy()
+        sma_x, a, cv = c.rolling(exit_sma).mean().to_numpy(), atr(df).to_numpy(), c.to_numpy()
+        w, pos, stop, size, held = np.zeros(len(c)), False, 0.0, 0.0, 0
+        for i in range(len(c)):
+            if not pos:
+                if cv[i] > sma200[i] and r2[i] < thr and np.isfinite(a[i]):
+                    pos, stop, held = True, cv[i] - atr_mult * a[i], 0
+                    size = min(cap, risk / (atr_mult * a[i] / cv[i]))
+            else:
+                held += 1
+                if cv[i] > sma_x[i] or cv[i] < stop or held >= max_hold:
+                    pos = False
+            w[i] = size if pos else 0.0
+        out[s] = pd.Series(w, index=c.index)
+    return pd.DataFrame(out)
+
+
+def cap_gross(w):
+    """Ramène la somme des positions à 100 % du capital au maximum (pas de levier)."""
+    return w.div(np.maximum(w.abs().sum(axis=1), 1.0), axis=0)
+
+
+def blend(closes, bars, trend_share=0.5):
+    """Moitié suivi de tendance (tsmom_lo, quelques ordres par mois), moitié retours à la moyenne (RSI2,
+    trades de 1 à 10 jours avec stop). En marché baissier, les deux se mettent en cash d'eux-mêmes."""
+    return cap_gross(trend_share * tsmom(closes, long_only=True) + rsi2_sleeve(bars).reindex(closes.index).fillna(0.0))
+
+
 PER_ASSET = {"trend_ema": trend_ema, "donchian": donchian, "mean_reversion": mean_reversion}
-DAILY_ONLY = {"tsmom_lo", "tsmom_ls"}
+DAILY_ONLY = {"tsmom_lo", "tsmom_ls", "blend"}
 STRATEGIES = [*PER_ASSET, "xs_momentum", *DAILY_ONLY]
 
 
@@ -150,6 +187,8 @@ def weights(name, bars, timeframe):
     if name in DAILY_ONLY:
         if timeframe != "1d":
             raise ValueError(f"{name} ne fonctionne qu'en bougies journalières (TIMEFRAME = '1d')")
+        if name == "blend":
+            return blend(closes, bars)
         return tsmom(closes, long_only=(name == "tsmom_lo"))
     if name == "xs_momentum":
         return xs_momentum(closes, timeframe)

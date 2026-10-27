@@ -86,6 +86,32 @@ def fetch_history(symbol, days=None):
     return df
 
 
+def fetch_daily(symbol, days=1600, refresh=False):
+    """Bougies journalières (cache data/<symbole>_1d.csv). Utile pour tester de nombreuses cryptos vite."""
+    CACHE.mkdir(exist_ok=True)
+    path = CACHE / f"{symbol.replace('/', '_')}_1d.csv"
+    if path.exists() and not refresh:
+        return pd.read_csv(path, index_col="ts", parse_dates=True)
+    since, rows = int((time.time() - days * 86_400) * 1000), []
+    while True:
+        batch = _get("/api/v3/klines", {"symbol": _pair(symbol), "interval": "1d", "startTime": since, "limit": 1000})
+        rows += batch
+        if len(batch) < 1000:
+            break
+        since = batch[-1][0] + 1
+    df = _to_df(rows).iloc[:-1]
+    df.to_csv(path)
+    return df
+
+
+def cached_history(symbol, refresh=False):
+    """Historique 1h lu dans le cache local (data/) ; téléchargé s'il n'existe pas ou si refresh=True."""
+    path = CACHE / f"{symbol.replace('/', '_')}_1h.csv"
+    if refresh or not path.exists():
+        return fetch_history(symbol)
+    return pd.read_csv(path, index_col="ts", parse_dates=True)
+
+
 def resample(df, timeframe):
     if timeframe == "1h":
         return df
