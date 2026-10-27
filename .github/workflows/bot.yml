@@ -20,6 +20,8 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main          # toujours la dernière version, même pour une exécution restée en file d'attente
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -38,6 +40,11 @@ jobs:
             echo "Rien à enregistrer"
           else
             git commit -m "bot: état du $(date -u +'%Y-%m-%d %H:%M') UTC"
-            git pull --rebase
-            git push
+            for i in 1 2 3; do
+              # en cas de modification simultanée du dépôt, la version la plus récente de l'état l'emporte
+              git pull --rebase -X theirs && git push && exit 0
+              git rebase --abort 2>/dev/null || true
+              sleep 5
+            done
+            exit 1
           fi
