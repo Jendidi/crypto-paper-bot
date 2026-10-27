@@ -42,19 +42,19 @@
     "LTC/USDT": 56.81
   },
   "live": {
-    "ts": "2026-10-27T14:20:04+00:00",
-    "equity": 99958.15606407322,
+    "ts": "2026-10-27T14:21:57+00:00",
+    "equity": 99955.51578947369,
     "prices": {
-      "BTC/USDT": 80023.63,
+      "BTC/USDT": 80018.0,
       "ETH/USDT": 2319.82,
-      "SOL/USDT": 100.11,
-      "BNB/USDT": 742.46,
-      "XRP/USDT": 1.3111,
+      "SOL/USDT": 100.09,
+      "BNB/USDT": 742.18,
+      "XRP/USDT": 1.3109,
       "ADA/USDT": 0.2037,
-      "DOGE/USDT": 0.0776,
-      "LINK/USDT": 11.339,
-      "AVAX/USDT": 8.789,
-      "LTC/USDT": 56.38
+      "DOGE/USDT": 0.07758,
+      "LINK/USDT": 11.337,
+      "AVAX/USDT": 8.788,
+      "LTC/USDT": 56.35
     }
   },
   "last_eq_log": 1793110102.3815846
