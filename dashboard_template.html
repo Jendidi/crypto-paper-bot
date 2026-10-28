@@ -23,6 +23,7 @@
   --grid: #1c272d; color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 body { background: var(--bg); color: var(--fg); font-family: var(--font); font-size: 15px; line-height: 1.5; }
 .page { max-width: 1080px; margin: 0 auto; padding-block: 24px 48px;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
@@ -122,9 +123,14 @@ a { color: var(--accent); }
     <h2 id="h-pos">Positions ouvertes</h2>
     <div class="scroll" id="positions"></div>
   </section>
+  <section class="card" id="pending-card" aria-labelledby="h-pending" hidden>
+    <div class="card-head"><h2 id="h-pending">Achats en attente d'un bon moment</h2>
+      <span class="sub">La stratégie a décidé d'acheter. Le bot attend que la baisse se stabilise ou que le prix soit 0,5 % moins cher, 24 h au maximum.</span></div>
+    <div class="scroll" id="pending"></div>
+  </section>
   <section class="card" aria-labelledby="h-assets">
     <div class="card-head"><h2 id="h-assets">Cryptos suivies</h2>
-      <span class="sub">Prix sur 180 jours, pointillé = moyenne 200 jours. Deux signaux d'achat : la tendance (score sur 4 horizons : 20, 50, 100 et 200 jours, achat à partir de 3/4) et le repli violent (RSI 2 sous 5 alors que le prix est au-dessus de sa moyenne 200 jours : achat pour 1 à 10 jours, stop à 3 ATR, 1 % du capital risqué).</span></div>
+      <span class="sub">Prix sur 180 jours, pointillé = moyenne 200 jours. Deux signaux d'achat : la tendance (score sur 4 horizons : 20, 50, 100 et 200 jours, achat à partir de 3/4) et le repli violent (RSI 2 sous 5 alors que le prix est au-dessus de sa moyenne 200 jours : achat pour 1 à 10 jours, stop à 3 ATR, environ 2 % du capital risqué avec la taille ×2).</span></div>
     <div class="assets" id="assets"></div>
   </section>
   <section class="card" aria-labelledby="h-trades">
@@ -156,7 +162,7 @@ const sym = (s) => s.split("/")[0];
 function header() {
   $("meta").textContent = "Stratégie : " + D.strategy_label + " · départ le " +
     new Date(D.start).toLocaleDateString("fr-FR") + " avec " + usd(D.start_equity) + " fictifs · frais " +
-    nf(D.costs.fee * 100, 2) + " % + glissement " + nf(D.costs.slip * 100, 2) + " % par ordre · " + D.size_note;
+    nf(D.costs.fee * 100, 2) + " % + glissement " + nf(D.costs.slip * 100, 2) + " % par ordre · " + D.size_note + " · " + D.exec_note;
   const stale = Date.now() - Date.parse(D.generated) > 3 * 3600e3;
   $("banner").innerHTML = (D.liveAt
     ? "<b>Prix en direct</b>, rafraîchis toutes les 15 secondes. État du bot au " + when(D.generated) + " (" + ago(D.generated) + "). "
@@ -172,7 +178,7 @@ function kpis() {
     ["", "Investi", nf(D.invested / D.equity * 100, 0) + " %", "", usd(D.invested), ""],
     ["", "En cash", nf(D.cash / D.equity * 100, 0) + " %", "", usd(D.cash), ""],
     ["", "Pire baisse", nf(D.max_dd * 100, 1) + " %", D.max_dd < -0.05 ? "neg" : "", "depuis le départ", ""],
-    ["", "Ordres passés", String(D.n_trades), "", "dernière bougie : " + (D.bar ? D.bar.slice(0, 10) : "—"), ""],
+    ["", "Ordres passés", String(D.n_trades), "", D.orders7 + " sur 7 jours (budget " + D.budget + ") · dernière analyse " + (D.bar ? D.bar.slice(11, 16) + " UTC" : "—"), ""],
   ];
   $("kpis").innerHTML = items.map(([k, l, v, vc, note, nc]) =>
     `<div class="kpi ${k}"><span class="label">${l}</span><span class="value ${vc}">${v}</span><span class="note ${nc}">${note}</span></div>`).join("");
@@ -230,8 +236,9 @@ function positions() {
   }
   const rows = D.positions.map((p) => `<tr><td><b>${sym(p.sym)}</b></td><td><span class="pill ${p.w > 0 ? "buy" : "sell"}">${p.w > 0 ? "Acheteur" : "Vendeur"}</span></td>
     <td class="r num">${nf(Math.abs(p.w) * 100, 1)} %</td><td class="r num">${usd(Math.abs(p.usd))}</td><td class="r num">${price(p.entry)}</td><td class="r num">${price(p.price)}</td>
-    <td class="r num ${cls(p.pnl)}">${pct(p.pnl, 2)}</td></tr>`).join("");
-  $("positions").innerHTML = `<table><thead><tr><th>Actif</th><th>Sens</th><th class="r">Part du capital</th><th class="r">Valeur</th><th class="r">Prix d'entrée</th><th class="r">Prix actuel</th><th class="r">Gain / perte</th></tr></thead><tbody>${rows}</tbody></table>`;
+    <td class="r num ${cls(p.pnl)}">${pct(p.pnl, 2)}</td>
+    <td class="r num">${p.sl ? price(p.sl) + " (−" + nf(p.sl_pct * 100, 0) + " %)" : "—"}</td><td class="r muted">sur signal</td></tr>`).join("");
+  $("positions").innerHTML = `<table><thead><tr><th>Actif</th><th>Sens</th><th class="r">Part du capital</th><th class="r">Valeur</th><th class="r">Prix d'entrée</th><th class="r">Prix actuel</th><th class="r">Gain / perte</th><th class="r">Stop-loss</th><th class="r">Objectif</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function spark(a) {
@@ -263,11 +270,12 @@ function trades() {
   }
   const rows = D.trades.map((t) => {
     const buy = t.to > t.from;
-    return `<tr><td class="num">${t.ts.slice(8, 10)}/${t.ts.slice(5, 7)}/${t.ts.slice(0, 4)}</td><td><b>${sym(t.symbol)}</b></td>
-      <td><span class="pill ${buy ? "buy" : "sell"}">${buy ? "Achat" : "Vente"}</span></td><td class="r num">${usd(t.usd)}</td><td class="r num">${price(t.price)}</td>
+    const e = t.exec || t.ts, why = { achat: "achat au bon moment", vente: "signal de vente", "réduction": "réduction", stop: "stop-loss", objectif: "objectif atteint" }[t.reason] || "ouverture / ajustement";
+    return `<tr><td class="num">${e.slice(8, 10)}/${e.slice(5, 7)} ${e.slice(11, 16)}</td><td><b>${sym(t.symbol)}</b></td>
+      <td><span class="pill ${buy ? "buy" : "sell"}">${buy ? "Achat" : "Vente"}</span></td><td class="muted">${why}</td><td class="r num">${usd(t.usd)}</td><td class="r num">${price(t.price)}</td>
       <td class="r num">${nf(t.from * 100, 1)} % → ${nf(t.to * 100, 1)} %</td><td class="r num">${nf(t.equity)}</td></tr>`;
   }).join("");
-  $("trades").innerHTML = `<table><thead><tr><th>Bougie du (UTC)</th><th>Actif</th><th>Sens</th><th class="r">Montant</th><th class="r">Prix</th><th class="r">Position</th><th class="r">Equity à ce moment</th></tr></thead><tbody>${rows}</tbody></table>`;
+  $("trades").innerHTML = `<table><thead><tr><th>Exécuté (UTC)</th><th>Actif</th><th>Sens</th><th>Raison</th><th class="r">Montant</th><th class="r">Prix</th><th class="r">Position</th><th class="r">Equity à ce moment</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function backtest() {
@@ -281,10 +289,23 @@ function backtest() {
     "réalisé avec la taille de positions actuelle (×2) et la bande sans ordre de 2 %, la période ne contient qu'un cycle de marché, les réglages voisins donnent des résultats du même ordre sans être clairement meilleurs, et les cryptos testées sont celles qui existent encore aujourd'hui, ce qui flatte un peu le résultat. " +
     "Le bot était investi à " + nf(b.invested * 100, 0) + " % en moyenne, avec environ " + nf(b.orders_week, 0) + " ordres par semaine (toutes cryptos confondues), " +
     "beaucoup plus en marché haussier et presque aucun en marché baissier. Il cherche surtout à limiter les baisses, pas à battre le BTC dans un marché qui monte. " +
+    "Version actuelle, testée sur 2 ans (28/10/2026) : achats exécutés au bon moment lu sur les bougies de 15 minutes, stop-loss de sécurité par position et budget de 12 ordres par semaine : +19,5 %/an, pire baisse -22 %, 4,8 ordres par semaine. " +
+    "Aucun take-profit fixe : il a fait passer le rendement de +23 % à +6 % par an sur le test. " +
     "Le résultat qui compte est celui de la courbe ci-dessus, observée sur des semaines.";
 }
 
-function render() { header(); kpis(); positions(); assets(); trades(); backtest(); drawCurve(); }
+function pendingList() {
+  $("pending-card").hidden = !D.pending.length;
+  if (!D.pending.length) return;
+  const rows = D.pending.map((p) => {
+    const a = D.assets.find((x) => x.sym === p.sym), now = a ? a.price : null;
+    return `<tr><td><b>${sym(p.sym)}</b></td><td class="r num">${nf(p.target * 100, 1)} %</td><td class="r num">${price(p.ref)}</td>
+      <td class="r num">${now ? price(now) + " (" + pct(now / p.ref - 1, 1) + ")" : "—"}</td><td class="r num">${nf(p.hours, 0)} h sur 24</td></tr>`;
+  }).join("");
+  $("pending").innerHTML = `<table><thead><tr><th>Actif</th><th class="r">Position visée</th><th class="r">Prix de décision</th><th class="r">Prix actuel</th><th class="r">Attente</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function render() { header(); kpis(); positions(); pendingList(); assets(); trades(); backtest(); drawCurve(); }
 
 /* Prix en direct : l'API publique de Binance est lue depuis le navigateur. Si elle est inaccessible
    (page ouverte dans un cadre qui bloque le réseau), la page reste sur l'état enregistré par le bot. */

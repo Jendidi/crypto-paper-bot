@@ -44,6 +44,16 @@ def size_note():
     return f"taille des positions ×{last:g} à partir de la bougie du {pd.Timestamp(date):%d/%m/%Y} (×{first:g} avant){band}"
 
 
+def exec_note():
+    e = config.EXEC
+    parts = [f"achats attendus jusqu'à {e['window'] // 4} h sur bougies de 15 min"]
+    if e["sl_major"]:
+        parts.append(f"stop-loss {e['sl_major']:.0%} (majeures) / {e['sl_alt']:.0%} (autres)")
+    if e["budget"]:
+        parts.append(f"{e['budget']} ordres maximum sur 7 jours")
+    return " · ".join(parts)
+
+
 def recent_daily(symbol):
     return fetch_recent(symbol, "1d", limit=400)["close"]
 
@@ -90,8 +100,10 @@ def main():
         price = prices.get(s, state["last_closes"][s])
         usd = w * state["equity"] * price / state["last_closes"][s]
         entry = state["basis"].get(s, price)
+        sl = config.EXEC["sl_major"] if s in config.EXEC["majors"] else config.EXEC["sl_alt"]
         positions.append({"sym": s, "w": w, "usd": usd, "entry": entry, "price": price,
-                          "pnl": (1 if w > 0 else -1) * (price / entry - 1)})
+                          "pnl": (1 if w > 0 else -1) * (price / entry - 1),
+                          "sl": entry * (1 - sl) if sl else None, "sl_pct": sl})
     invested = sum(abs(p["usd"]) for p in positions)
 
     # --- actifs : cours, score de tendance, courbe
@@ -115,7 +127,10 @@ def main():
         "generated": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "start": state["start"], "start_equity": start_eq, "equity": equity,
         "bar": state["last_bar"], "strategy": config.STRATEGY, "strategy_label": LABELS.get(config.STRATEGY, config.STRATEGY),
-        "size_note": size_note(),
+        "size_note": size_note(), "exec_note": exec_note(),
+        "pending": [{"sym": s, "target": p["target"], "ref": p["ref"], "hours": p["bars"] / 4} for s, p in state.get("pending", {}).items()],
+        "orders7": sum(1 for x in state.get("orders_ts", []) if pd.Timestamp(x) > pd.Timestamp.utcnow().tz_localize(None) - pd.Timedelta(days=7)),
+        "budget": config.EXEC["budget"],
         "bar_equity": state["equity"], "weights": state["weights"], "last_closes": state["last_closes"],
         "cash": equity - invested, "invested": invested, "max_dd": max_dd,
         "curve": curve, "positions": positions, "assets": assets,

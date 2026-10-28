@@ -1,14 +1,18 @@
-"""Paper trading : tourne en continu sur les vrais prix, avec de l'argent fictif.
+"""Paper trading : tourne avec de l'argent fictif sur les vrais prix de Binance.
 
-Chaque minute, récupère les prix en direct des cryptos et calcule la valeur du
-portefeuille au prix du marché. À chaque nouvelle bougie clôturée (config.TIMEFRAME),
-recalcule les positions de la stratégie et passe les ordres fictifs, avec exactement
-les mêmes calculs (frais, financement) que le backtest.
+Les décisions sont journalières (stratégie `blend`, positions cibles à la clôture de 00:00 UTC). L'exécution se fait sur les
+bougies de 15 minutes : un achat attend le bon moment (la baisse se stabilise, ou prix 0,5 % moins cher) pendant 24 h au
+maximum, les ventes sont immédiates, chaque position a un stop-loss contrôlé toutes les 15 minutes, et un budget limite le
+nombre d'ordres sur 7 jours glissants (voir execution.py et config.EXEC).
+
+À chaque passe, le bot rejoue toutes les bougies de 15 minutes terminées depuis la précédente : le résultat ne dépend donc pas de
+l'heure exacte à laquelle il tourne. Chaque ordre est exécuté au prix de clôture de la bougie qui l'a déclenché, frais et glissement
+inclus. Si un jour est incomplet, il est repris à la passe suivante.
 
 Fichiers écrits (lus par dashboard.py) :
-  paper_state.json   état complet : on peut arrêter (Ctrl+C) et relancer sans rien perdre
+  paper_state.json   état complet : positions, ordres en attente, prix d'entrée, compteur d'ordres...
   paper_trades.csv   un ordre par ligne
-  paper_equity.csv   courbe d'equity, un point toutes les 15 minutes
+  paper_equity.csv   courbe d'equity, un point par passe enregistrée
 
 Usage :  python paper_trader.py          (tourne en continu, une passe par minute)
          python paper_trader.py --once   (une seule passe puis arrêt, pour un planificateur)
@@ -22,8 +26,8 @@ from pathlib import Path
 import pandas as pd
 
 import config
-from data import fetch_prices, fetch_recent
-from engine import net_returns
+from data import fetch_prices, fetch_recent, fetch_since
+from execution import advance
 from strategy import weights
 
 STATE = Path("paper_state.json")
@@ -31,19 +35,45 @@ TRADES = Path("paper_trades.csv")
 EQUITY = Path("paper_equity.csv")
 POLL_SECONDS = 60
 EQUITY_LOG_SECONDS = 900
+WARMUP = pd.Timedelta(days=4)           # bougies 15 min relues avant la dernière traitée (moyenne de référence)
+
+
+def migrate(state):
+    """Reprise d'un compte tenu en bougies journalières : on continue bougie de 15 minutes par bougie, sans rupture."""
+    if "pending" in state:
+        return state
+    day = pd.Timestamp(state["last_bar"])                      # dernier jour traité (la bougie ouvre à 00:00)
+    state["decided_day"] = str(day)
+    state["last_bar"] = str(day + pd.Timedelta(hours=23, minutes=45))
+    prev = dict(state["weights"])
+    for t in state["trades"]:
+        t.setdefault("exec", str(pd.Timestamp(t["ts"]) + pd.Timedelta(days=1)))
+        t.setdefault("reason", "")
+        if t["ts"] == str(day):
+            prev[t["symbol"]] = t["from"]                      # le coût de ces changements est facturé à la bougie suivante
+    state["prev_weights"] = prev
+    state["pending"], state["cooldown"], state["orders_ts"] = {}, {}, []   # le budget d'ordres repart de zéro
+    state["entry"] = dict(state.get("basis", {}))
+    return state
 
 
 def load():
     if STATE.exists():
-        return json.loads(STATE.read_text())
+        return migrate(json.loads(STATE.read_text()))
+    last = fetch_since(config.SYMBOLS[0], "15m", pd.Timestamp.utcnow().tz_localize(None) - pd.Timedelta(hours=6)).index[-1]
     return {"start": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "start_equity": config.STARTING_CASH, "equity": config.STARTING_CASH,
-            "last_bar": None, "weights": {}, "basis": {}, "trades": [], "last_closes": {},
-            "live": {}, "last_eq_log": 0}
+            "last_bar": str(last), "decided_day": str(last.normalize()), "weights": {}, "prev_weights": {}, "entry": {},
+            "basis": {}, "cooldown": {}, "pending": {}, "orders_ts": [], "trades": [], "last_closes": {}, "live": {},
+            "last_eq_log": 0}
 
 
 def save(state):
     STATE.write_text(json.dumps(state, indent=2))
+    with TRADES.open("w", encoding="utf-8") as f:
+        f.write("exec,symbol,from,to,price,usd,equity,reason\n")
+        for t in state["trades"]:
+            f.write(",".join(str(t.get(k, "")) for k in ("exec", "symbol", "from", "to", "price", "usd", "equity", "reason")) + "\n")
 
 
 def append_csv(path, header, row):
@@ -54,50 +84,31 @@ def append_csv(path, header, row):
         f.write(",".join(str(x) for x in row) + "\n")
 
 
-def record_trade(state, ts, symbol, old, new, price):
-    """Enregistre l'ordre et met à jour le prix d'entrée moyen de la position."""
+def record_trade(state, ts, symbol, old, new, price, why):
     usd = abs(new - old) * state["equity"]
-    if new == 0:
-        state["basis"].pop(symbol, None)
-    elif abs(new) > abs(old) and old * new >= 0:       # on ajoute à la position
-        prev = state["basis"].get(symbol, price)
-        state["basis"][symbol] = (prev * abs(old) + price * (abs(new) - abs(old))) / abs(new)
-    elif old * new < 0:                                # retournement
-        state["basis"][symbol] = price
-    trade = {"ts": ts, "symbol": symbol, "from": old, "to": new, "price": price,
-             "usd": round(usd, 2), "equity": round(state["equity"], 2)}
+    trade = {"ts": ts, "exec": ts, "symbol": symbol, "from": old, "to": new, "price": price,
+             "usd": round(usd, 2), "equity": round(state["equity"], 2), "reason": why}
     state["trades"].append(trade)
-    append_csv(TRADES, "ts,symbol,from,to,price,usd,equity", [trade[k] for k in ("ts", "symbol", "from", "to", "price", "usd", "equity")])
     side = "ACHAT" if new > old else "VENTE"
-    print(f"   >>> {side:6} {symbol:10} {usd:>10,.0f} USDT à {price:,.4f}  (position {new:+.1%} du capital)")
+    print(f"   >>> {ts[:16]} UTC  {side:6} {symbol:10} {usd:>10,.0f} USDT à {price:,.4f}  (position {new:+.1%} du capital, {why})")
 
 
 def update(state):
-    """Traite les nouvelles bougies clôturées. Renvoie True si l'état a changé."""
-    bars = {s: fetch_recent(s, config.TIMEFRAME) for s in config.SYMBOLS}
-    closes = pd.DataFrame({s: df["close"] for s, df in bars.items()}).dropna()
-    last = closes.index[-1]
-    if state["last_bar"] == str(last):
-        return False
-    w = weights(config.STRATEGY, bars, config.TIMEFRAME).reindex(closes.index).fillna(0)
-    net = net_returns(w, closes, config.TIMEFRAME)
-    first = state["last_bar"] is None
-    if not first:
-        new = net[net.index > pd.Timestamp(state["last_bar"])]
-        state["equity"] *= float((1 + new).prod())
-    target = {s: round(float(v), 4) for s, v in w.iloc[-1].items()}
-    if first:                                          # ouverture initiale : on paie les frais d'entrée
-        state["equity"] *= 1 - sum(abs(v) for v in target.values()) * (config.FEE + config.SLIPPAGE)
-    for s, v in target.items():
-        old = state["weights"].get(s, 0.0)
-        if abs(v - old) > 1e-9:
-            record_trade(state, str(last), s, old, v, float(closes[s].iloc[-1]))
-    state["weights"], state["last_bar"] = target, str(last)
-    state["last_closes"] = {s: float(closes[s].iloc[-1]) for s in closes.columns}
-    invested = sum(abs(v) for v in target.values())
-    print(f"[{datetime.now():%Y-%m-%d %H:%M}] bougie {last:%Y-%m-%d %H:%M} UTC  capital "
-          f"{state['equity']:,.2f} ({state['equity'] / state['start_equity'] - 1:+.2%})  investi {invested:.0%}")
-    return True
+    """Rejoue les bougies de 15 minutes terminées depuis la dernière passe. Renvoie leur nombre."""
+    t_last = pd.Timestamp(state["last_bar"])
+    raw = {s: fetch_since(s, "15m", t_last - WARMUP) for s in config.SYMBOLS}
+    closes = pd.DataFrame({s: b["close"] for s, b in raw.items()}).dropna()
+    opens = pd.DataFrame({s: b["open"] for s, b in raw.items()}).reindex(closes.index)
+    barsd = {s: fetch_recent(s, "1d", limit=1000) for s in config.SYMBOLS}
+    wd = weights(config.STRATEGY, barsd, "1d")
+    n = advance(state, closes, opens, wd, record=lambda ts, s, o, nw, px, why: record_trade(state, ts, s, o, nw, px, why))
+    state["basis"] = dict(state["entry"])
+    if n:
+        invested = sum(abs(v) for v in state["weights"].values())
+        print(f"[{datetime.now():%Y-%m-%d %H:%M}] {n} bougie(s) de 15 min traitée(s), dernière {state['last_bar'][:16]} UTC  capital "
+              f"{state['equity']:,.2f} ({state['equity'] / state['start_equity'] - 1:+.2%})  investi {invested:.0%}  "
+              f"en attente {len(state['pending'])}")
+    return n
 
 
 def live(state):
@@ -120,7 +131,7 @@ def live(state):
 def main():
     once = "--once" in sys.argv                    # une seule passe, pour un planificateur (GitHub Actions)
     state = load()
-    print(f"Paper trading — {config.STRATEGY} en {config.TIMEFRAME} sur {len(config.SYMBOLS)} cryptos — "
+    print(f"Paper trading — {config.STRATEGY}, décisions journalières, exécution sur bougies 15 min — {len(config.SYMBOLS)} cryptos — "
           f"capital fictif {state['start_equity']:,.0f} USDT" + ("" if once else " — Ctrl+C pour arrêter"))
     while True:
         try:

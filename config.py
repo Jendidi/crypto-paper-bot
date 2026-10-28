@@ -19,6 +19,24 @@ SIZE_SCHEDULE = [("1970-01-01", 1.0), ("2026-10-27", 2.0)]
 
 # Bande sans ordre : une position n'est modifiée que si l'écart avec sa cible dépasse 2 % du capital (les sorties complètes
 # restent toujours permises). Évite les micro-ordres. Test sur 4 ans en x2 : 13,7 -> 5,2 ordres par semaine, rendement inchangé.
+# Exécution des achats : la stratégie décide à la clôture du jour (00:00 UTC), mais l'achat n'est passé qu'au bon moment lu sur
+# les bougies de 15 minutes, 24 h au maximum : soit la baisse se stabilise (prix repassé au-dessus de sa moyenne sur EXEC_EMA bougies
+# avec une bougie verte), soit le prix est passé EXEC_DIP sous le prix de décision. Les ventes restent immédiates.
+# Test sur 2 ans : même nombre d'ordres (5,4 par semaine), rendement +23 % -> +25 %/an. Chaque ordre est exécuté au prix de clôture de la bougie.
+EXEC = dict(
+    ema=20,                   # moyenne (en bougies de 15 min) que le prix doit repasser pour dire « la baisse se stabilise »
+    dip=0.005,                # ou bien : prix 0,5 % sous le prix de décision
+    window=96,                # attente maximale d'un achat : 96 bougies de 15 min = 24 h
+    sl_major=0.25,            # stop-loss par position (contrôlé à chaque bougie de 15 min), en % sous le prix d'entrée moyen :
+    sl_alt=0.30,              #   majeures (BTC, ETH, BNB, LTC, XRP) / autres cryptos. Stop de sécurité : des stops serrés (8-15 %)
+                              #   font perdre 5 à 14 points de rendement par an sur le test, 25/30 % n'en coûtent que 2 à 3.
+    tp=None,                  # take-profit par position. Aucun : un TP fixe coupe les gains de la tendance (+6 % au lieu de +23 %/an
+                              #   sur le test). Les sorties se font sur signal (rebond, fin de tendance, stop de la stratégie).
+    cooldown=288,             # après une sortie sur stop ou TP, on attend 3 jours avant de racheter cette crypto
+    budget=12,                # nombre maximal d'ordres sur 7 jours glissants (les sorties complètes restent toujours permises) :
+                              #   plafonne les rafales, moyenne de 4,8 ordres par semaine sur le test
+    majors=("BTC/USDT", "ETH/USDT", "BNB/USDT", "LTC/USDT", "XRP/USDT"),
+)
 NO_TRADE_BAND = 0.02
 NO_TRADE_BAND_FROM = "2026-10-27"      # même principe que la taille : le passé du compte n'est pas recalculé
 

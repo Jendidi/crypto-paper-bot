@@ -4,7 +4,7 @@ name: bot
 # de la page docs/index.html servie par GitHub Pages. L'état est enregistré dans le dépôt.
 on:
   schedule:
-    - cron: "17 * * * *"
+    - cron: "2,17,32,47 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -36,8 +36,13 @@ jobs:
           git config user.name "paper-bot"
           git config user.email "paper-bot@users.noreply.github.com"
           git add -A
+          # Toutes les 15 minutes le bot rejoue les bougies depuis le dernier état enregistré (résultat identique, quelle que soit
+          # l'heure de la passe). On n'enregistre qu'environ une fois par heure, ou dès qu'un ordre a été passé.
+          AGE=$(( $(date +%s) - $(git log -1 --format=%ct) ))
           if git diff --cached --quiet; then
             echo "Rien à enregistrer"
+          elif [ "$AGE" -lt 3300 ] && git diff --cached --quiet -- paper_trades.csv; then
+            echo "Passe intermédiaire, sans ordre : rien à enregistrer pour l'instant"
           else
             git commit -m "bot: état du $(date -u +'%Y-%m-%d %H:%M') UTC"
             for i in 1 2 3; do

@@ -54,6 +54,21 @@ def fetch_recent(symbol, timeframe, limit=1000):
     return _to_df(rows).iloc[:-1]
 
 
+def fetch_since(symbol, interval, since):
+    """Toutes les bougies terminées depuis `since` (UTC, sans fuseau). La bougie en cours est retirée."""
+    start = int((pd.Timestamp(since) - pd.Timestamp("1970-01-01")) // pd.Timedelta("1ms"))
+    rows = []
+    while True:
+        batch = _get("/api/v3/klines", {"symbol": _pair(symbol), "interval": interval, "startTime": start, "limit": 1000})
+        if not batch:
+            break
+        rows += batch
+        start = batch[-1][0] + 1
+        if len(batch) < 1000:
+            break
+    return _to_df(rows).iloc[:-1]
+
+
 def fetch_prices(symbols):
     """Derniers prix du marché : {symbole: prix}."""
     wanted = json.dumps([_pair(s) for s in symbols], separators=(",", ":"))
