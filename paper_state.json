@@ -1,8 +1,8 @@
 {
   "start": "2026-10-27T15:54:03+00:00",
   "start_equity": 100000.0,
-  "equity": 99700.57619049826,
-  "last_bar": "2026-11-12 22:30:00",
+  "equity": 99697.76943227748,
+  "last_bar": "2026-11-13 00:00:00",
   "weights": {
     "BTC/USDT": 0.0,
     "ETH/USDT": 0.0,
@@ -26,12 +26,12 @@
     "AAVE/USDT": 0.0,
     "ALGO/USDT": 0.0,
     "VET/USDT": 0.0,
-    "INJ/USDT": 0.006,
+    "INJ/USDT": 0.09659056434992458,
     "OP/USDT": 0.0,
     "APT/USDT": 0.0
   },
   "basis": {
-    "INJ/USDT": 8.058
+    "INJ/USDT": 7.4493144968269664
   },
   "trades": [
     {
@@ -374,68 +374,79 @@
       "usd": 438.9,
       "equity": 99750.04,
       "reason": "vente"
+    },
+    {
+      "ts": "2026-11-13 00:15:00",
+      "exec": "2026-11-13 00:15:00",
+      "symbol": "INJ/USDT",
+      "from": 0.006,
+      "to": 0.09659056434992458,
+      "price": 7.409,
+      "usd": 9031.68,
+      "equity": 99697.77,
+      "reason": "achat"
     }
   ],
   "last_closes": {
-    "BTC/USDT": 71427.07,
-    "ETH/USDT": 2012.58,
-    "SOL/USDT": 81.34,
-    "BNB/USDT": 653.56,
-    "XRP/USDT": 1.0358,
-    "ADA/USDT": 0.1738,
-    "DOGE/USDT": 0.06624,
-    "LINK/USDT": 10.085,
-    "AVAX/USDT": 8.331,
-    "LTC/USDT": 50.13,
-    "DOT/USDT": 0.832,
-    "ATOM/USDT": 1.432,
-    "UNI/USDT": 6.024,
-    "NEAR/USDT": 3.403,
-    "TRX/USDT": 0.3157,
+    "BTC/USDT": 71300.0,
+    "ETH/USDT": 2015.41,
+    "SOL/USDT": 81.62,
+    "BNB/USDT": 657.01,
+    "XRP/USDT": 1.0408,
+    "ADA/USDT": 0.175,
+    "DOGE/USDT": 0.06647,
+    "LINK/USDT": 10.138,
+    "AVAX/USDT": 8.356,
+    "LTC/USDT": 50.07,
+    "DOT/USDT": 0.837,
+    "ATOM/USDT": 1.441,
+    "UNI/USDT": 6.083,
+    "NEAR/USDT": 3.408,
+    "TRX/USDT": 0.3155,
     "ETC/USDT": 6.68,
-    "XLM/USDT": 0.1483,
-    "BCH/USDT": 224.5,
-    "FIL/USDT": 0.7457,
-    "AAVE/USDT": 113.92,
-    "ALGO/USDT": 0.0875,
-    "VET/USDT": 0.005192,
-    "INJ/USDT": 7.444,
-    "OP/USDT": 0.0967,
-    "APT/USDT": 0.5546
+    "XLM/USDT": 0.149,
+    "BCH/USDT": 225.7,
+    "FIL/USDT": 0.7455,
+    "AAVE/USDT": 114.17,
+    "ALGO/USDT": 0.0876,
+    "VET/USDT": 0.005191,
+    "INJ/USDT": 7.409,
+    "OP/USDT": 0.0968,
+    "APT/USDT": 0.5559
   },
   "live": {
-    "ts": "2026-11-12T22:59:32+00:00",
-    "equity": 99702.18340021654,
+    "ts": "2026-11-13T00:24:57+00:00",
+    "equity": 99688.67116710036,
     "prices": {
-      "BTC/USDT": 71422.52,
-      "ETH/USDT": 2014.13,
-      "SOL/USDT": 81.46,
-      "BNB/USDT": 654.15,
-      "XRP/USDT": 1.036,
-      "ADA/USDT": 0.1736,
-      "DOGE/USDT": 0.06633,
-      "LINK/USDT": 10.072,
-      "AVAX/USDT": 8.339,
-      "LTC/USDT": 50.17,
-      "DOT/USDT": 0.832,
-      "ATOM/USDT": 1.434,
-      "UNI/USDT": 6.028,
-      "NEAR/USDT": 3.405,
-      "TRX/USDT": 0.3157,
-      "ETC/USDT": 6.68,
-      "XLM/USDT": 0.1494,
-      "BCH/USDT": 224.4,
-      "FIL/USDT": 0.7465,
-      "AAVE/USDT": 114.0,
+      "BTC/USDT": 71370.79,
+      "ETH/USDT": 2015.44,
+      "SOL/USDT": 81.6,
+      "BNB/USDT": 657.26,
+      "XRP/USDT": 1.0392,
+      "ADA/USDT": 0.1749,
+      "DOGE/USDT": 0.06654,
+      "LINK/USDT": 10.147,
+      "AVAX/USDT": 8.364,
+      "LTC/USDT": 50.12,
+      "DOT/USDT": 0.835,
+      "ATOM/USDT": 1.435,
+      "UNI/USDT": 6.091,
+      "NEAR/USDT": 3.412,
+      "TRX/USDT": 0.3156,
+      "ETC/USDT": 6.67,
+      "XLM/USDT": 0.1488,
+      "BCH/USDT": 225.7,
+      "FIL/USDT": 0.7449,
+      "AAVE/USDT": 114.42,
       "ALGO/USDT": 0.0877,
-      "VET/USDT": 0.005197,
-      "INJ/USDT": 7.464,
-      "OP/USDT": 0.097,
-      "APT/USDT": 0.5545
+      "VET/USDT": 0.005187,
+      "INJ/USDT": 7.402,
+      "OP/USDT": 0.0966,
+      "APT/USDT": 0.5559
     }
   },
-  "last_eq_log": 1794524372.5399518,
-  "decided_day": "2026-11-11 00:00:00",
+  "last_eq_log": 1794529497.92448,
+  "decided_day": "2026-11-12 00:00:00",
   "prev_weights": {
     "BTC/USDT": 0.0,
     "ETH/USDT": 0.0,
@@ -463,12 +474,19 @@
     "OP/USDT": 0.0,
     "APT/USDT": 0.0
   },
-  "pending": {},
+  "pending": {
+    "NEAR/USDT": {
+      "target": 0.07007677122175919,
+      "ref": 3.423,
+      "bars": 1
+    }
+  },
   "cooldown": {},
   "orders_ts": [
-    "2026-11-10 00:00:00"
+    "2026-11-10 00:00:00",
+    "2026-11-13 00:15:00"
   ],
   "entry": {
-    "INJ/USDT": 8.058
+    "INJ/USDT": 7.4493144968269664
   }
 }
